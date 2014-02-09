@@ -30,8 +30,8 @@ netcdf_dataset
 ==============
 
 Provides a helper class NetcdfDataset that serves as a wrapper around 
-a netCDF4.Dataset instance. Basically, all it does is parse all the 
-attributes, dimensions, and variables in netCDF4.Dataset, and populates
+a netCDF4.Dataset instance. All it does is parse all the attributes, 
+dimensions, groups and variables in netCDF4.Dataset, and populates
 a Python class instance with their values. It is most useful for exploring
 NetCDF datasets in interactive Python sessions, but may be also used 
 in general Python programs to reduce verbosity of the code when parsing 
@@ -41,7 +41,7 @@ Usage
 -----
 
 >>> from netcdf_dataset import NetcdfDataset
->>> nc = NetcdfDataset("samplefile.nc","r")
+>>> nc = NetcdfDataset("samplefile.nc")
 
 Dependencies
 ------------
@@ -86,31 +86,51 @@ class Container():
 class NetcdfDataset():
     """
     Reads in a netCDF4.Dataset from file and populates the metadata
-    as class attributes.
-    """
-    def __init__(self,filename,mode="r"):
-        """
-        """
-        self.FILENAME  = filename
-        self.OPEN_MODE = mode
+    as class attributes. Takes exactly the same arguments as 
+    netCDF4.Dataset plus one:
 
-        nc = Dataset(filename,mode)
+    convertStringToBooleans - if True (default), converts "T" to True 
+    and "F" to False.
+
+    Type help(netCDF4.Dataset) for more information on other keyword 
+    arguments.
+    """
+    def __init__(self,filename,mode="r",clobber=True,diskless=False, 
+                 persist=False,format='NETCDF4',convertStringToBooleans=True):
+        """
+        NetcdfDataset constructor method.
+        """
+        self.FILENAME = filename
+        self.MODE     = mode
+        self.CLOBBER  = clobber
+        self.DISKLESS = diskless
+        self.PERSIST  = persist
+        self.FORMAT   = format
+
+        nc = Dataset(filename,mode=mode,clobber=clobber,diskless=diskless,
+                     persist=persist,format=format)
         self.nc = nc
 
         # Add global attributes
         setattr(self,"attributes",Container())
         for attribute in nc.ncattrs():
             attr = nc.getncattr(attribute)
-            if attr == "T":
-                attr = True
-            elif attr == "F":
-                attr = False
+            if convertStringToBooleans:
+                if attr == "T":
+                    attr = True
+                elif attr == "F":
+                    attr = False
             setattr(self.attributes,attribute,attr)
 
         # Add dimensions
         setattr(self,"dimensions",Container())
         for dim in nc.dimensions.keys():
             setattr(self.dimensions,dim,len(nc.dimensions[dim]))
+
+        # Add groups
+        setattr(self,"groups",Container())
+        for groupName in nc.groups:
+            setattr(self.groups,groupName,nc.groups[fieldName])
 
         # Add variables, for now, only keys. Load later.
         setattr(self,"variables",Container())
