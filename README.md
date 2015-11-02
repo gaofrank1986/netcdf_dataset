@@ -20,8 +20,3 @@ Usage
 Dependencies
 ------------
 netCDF4
-    A third-party library that provides a Python interface to UCAR's
-    NetCDF file format. Get from  http://pypi.python.org/pypi/netCDF4.
-datetime
-    Date and time manipulation library. Part of Python's standard 
-    library.
